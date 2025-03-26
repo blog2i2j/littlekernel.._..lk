@@ -27,20 +27,31 @@ static spin_lock_t arm_boot_cpu_lock = 1;
 static volatile int secondaries_to_init = 0;
 #endif
 
-static void arm64_cpu_early_init(void) {
+static void arm64_early_init_percpu(void) {
     /* set the vector base */
     ARM64_WRITE_SYSREG(VBAR_EL1, (uint64_t)&arm64_exception_base);
+
+    // hard set SCTLR, making sure any new/unknown bits are cleared
+    uint64_t sctlr =
+        (1 << 0) | // SCTLR_EL1.M
+        (1 << 2) | // SCTLR_EL1.C
+        (1 << 3) | // SCTLR_EL1.SA
+        (1 << 4) | // SCTLR_EL1.SA0
+        (1 << 12); // SCTLR_EL1.I
+    ARM64_WRITE_SYSREG(SCTLR_EL1, sctlr);
+
+    // Disable all debug exceptions
+    ARM64_WRITE_SYSREG(MDSCR_EL1, (uint64_t)0);
 
     arch_enable_fiqs();
 }
 
 void arch_early_init(void) {
-    arm64_cpu_early_init();
+    arm64_early_init_percpu();
     platform_init_mmu_mappings();
 }
 
-void arch_stacktrace(uint64_t fp, uint64_t pc)
-{
+void arch_stacktrace(uint64_t fp, uint64_t pc) {
     struct arm64_stackframe frame;
 
     if (!fp) {
@@ -110,7 +121,7 @@ void arch_enter_uspace(vaddr_t entry_point, vaddr_t user_stack_top) {
      * all interrupts enabled
      * mode 0: EL0t
      */
-    uint32_t spsr = 0;
+    uint64_t spsr = 0;
 
     arch_disable_ints();
 
@@ -137,7 +148,7 @@ void arm64_secondary_entry(ulong asm_cpu_num) {
     if (cpu != asm_cpu_num)
         return;
 
-    arm64_cpu_early_init();
+    arm64_early_init_percpu();
 
     spin_lock(&arm_boot_cpu_lock);
     spin_unlock(&arm_boot_cpu_lock);

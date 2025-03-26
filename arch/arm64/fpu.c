@@ -78,7 +78,8 @@ void arm64_fpu_save_state(struct thread *t) {
         "mrs     %1, fpsr\n"
         ".arch_extension nofp\n"
         : "=r"(fpcr), "=r"(fpsr)
-        : "r"(fpstate));
+        : "r"(fpstate)
+        : "memory");
     fpstate->fpcr = (uint32_t)fpcr;
     fpstate->fpsr = (uint32_t)fpsr;
 
@@ -86,7 +87,7 @@ void arm64_fpu_save_state(struct thread *t) {
 }
 
 void arm64_fpu_exception(struct arm64_iframe_long *iframe) {
-    uint32_t cpacr = ARM64_READ_SYSREG(cpacr_el1);
+    uint64_t cpacr = ARM64_READ_SYSREG(cpacr_el1);
     if (((cpacr >> 20) & 3) != 3) {
         cpacr |= 3 << 20;
         ARM64_WRITE_SYSREG(cpacr_el1, cpacr);

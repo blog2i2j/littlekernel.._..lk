@@ -7,7 +7,6 @@
  */
 #include <arch/mp.h>
 
-#include <assert.h>
 #include <lk/trace.h>
 #include <lk/err.h>
 #include <platform/interrupts.h>

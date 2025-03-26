@@ -32,7 +32,7 @@ static inline void arch_disable_ints(void) {
 }
 
 static inline bool arch_ints_disabled(void) {
-    unsigned long state;
+    uint64_t state;
 
     __asm__ volatile("mrs %0, daif" : "=r"(state));
     state &= (1<<7);
@@ -51,7 +51,7 @@ static inline void arch_disable_fiqs(void) {
 }
 
 static inline bool arch_fiqs_disabled(void) {
-    unsigned long state;
+    uint64_t state;
 
     __asm__ volatile("mrs %0, daif" : "=r"(state));
     state &= (1<<6);
